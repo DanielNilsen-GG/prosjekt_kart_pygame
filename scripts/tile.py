@@ -8,6 +8,7 @@ class Tile:  # klasse for alle tiles
     def draw(self, surface):
         surface.blit(self.img, self.rect)
         
+        
 
 
 class Offgrid(Tile): # ikke mulig å kjøre her
