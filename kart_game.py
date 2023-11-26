@@ -1,9 +1,6 @@
 import pygame
 import sys
-# from scripts.karts import Kart
-from random import randint
-
-
+import random
 KART_POS = {'forward': [4,2],
             'forward_steer_right': [18, 2],
             'right': [34,4],
@@ -27,7 +24,8 @@ class Game:
         pygame.display.set_caption("Kart Sim")
         self.screen = pygame.display.set_mode((WIDTH,HEIGHT))
         self.display = pygame.Surface((640,480))
-        
+        self.font = pygame.font.Font('PKMN_RBYGSC.ttf', 32)
+
         self.clock = pygame.time.Clock()
 
 
@@ -36,49 +34,44 @@ class Game:
         
         self.scroll = [0, 0] 
 
-        self.sprite_sheet_image = pygame.image.load('mini_pixel/Cars/Player_blue.png')
-
-        
-        class Camera(object):
-            def __init__(self, camera_func, width, height):
-                self.camera_func = camera_func
-                self.state = pygame.Rect(0, 0, width, height)
-                
-            def apply(self, target):
-                return target.rect.move(self.state.topleft)
-                
-            def update(self, target):
-                self.state = self.camera_func(self.state, target.rect)
-            
-            def simple_camera(camera, target_rect):
-                l, t, _, _ = target_rect # l = left,  t = top
-                _, _, w, h = camera      # w = width, h = height
-                return pygame.Rect(-l+(WIDTH/2), -t+(HEIGHT/2), w, h)
-
-
         vel = 2
         x = 50
         y = 50
-        p1_width = 14
-        p1_height = 16
+        player_width = 14
+        player_height = 16
 
         class All_Objects:
-            def __init__(self, path, width, height):
+            def __init__(self, path: str, width: int, height: int):
                 self.image = pygame.image.load(path)
                 self.width = width
                 self.height = height
+                self.obstacles = []
+
 
         class Maps(All_Objects):
-            def __init__(self, path, width, height):
+            def __init__(self, path: str, width: int, height: int, obs_count: int, obs_size: int):
                 super().__init__(path, width, height)
-                self.backhground = pygame.image.load(path).convert()
-                self.backhground = pygame.transform.scale(self.backhground, (self.width, self.height))
-        
-        self.map = Maps(f"maps/{randint(1,5)}.jpg", 898, 1324)
-        
+                self.background = pygame.image.load(path)
+                self.background = pygame.transform.scale(self.background, (self.width, self.height)) 
+                # self.obstacles = []
+                # self.obs_x = random.uniform((self.width/2)-(self.width/4)+ 10, (self.width/2)+(self.width/4)) -10
+                # self.obs_y = random.randint(-self.height, self.height)
+                # self.obs_size = obs_size
+
+                
+            #     for i in range(obs_count):
+            #         self.obs = pygame.image.load(f"Assets/{random.randint(1,40)}.png").convert_alpha()
+            #         self.obs = pygame.transform.scale(self.obs, (obs_size, obs_size))
+            #         self.obs.set_colorkey((0,0,0))
+            #         self.obs_rect = self.obs.get_rect()
+            #         self.background.blit(self.obs, (self.obs_x, self.obs_y))
+            #         self.obstacles.append(self.obs_rect)
+            # def rect(self):
+            #     return pygame.Rect(self.obs_x, self.obs_y, self.obs_size, self.obs_size)
+
 
         class Kart(All_Objects):
-            def __init__(self, path, width, height, scale, x, y, direction, vel):
+            def __init__(self, path: str, width: int, height: int, scale: int, x: int, y: int, direction: str, vel: float):
                 super().__init__(path, width, height )
                 self.scale = scale 
                 self.direction = direction
@@ -94,53 +87,44 @@ class Game:
                 image = pygame.transform.scale(image, (self.width * self.scale, self.height * self.scale))
                 image.set_colorkey((0,0,0))
                 return image
-                # trail.blit(, (0,0), self.width, self.height)
 
             def rect(self):
-                return pygame.Rect(x, y, self.width, self.height)
-            
+                return pygame.Rect(self.x, self.y, self.width, self.height)
+        
+
         self.camera_x = 0
         self.camera_y = 0
-            
+
+        self.map = [Maps(f"maps/1.jpg", 898, 1324, 30, 50),Maps(f"maps/2.jpg", 898, 1324, 4, 50),Maps(f"maps/3.jpg", 898, 1324, 5, 50),Maps(f"maps/4.jpg", 898, 1324, 6, 50),Maps(f"maps/5.jpg", 898, 1324, 7, 50)]
         direction = 'forward'
-        self.player = Kart('mini_pixel/Cars/Player_blue.png', p1_width, p1_height, 3, self.camera_x, self.camera_y, direction, vel)
-        
-        
-    # def draw_grid(self):
-    #     for i_x in range(0, WIDTH, TILESIZE):
-    #         pygame.draw.line(self.display, 'black', (i_x, 0), (i_x, HEIGHT))
-        
-    #     for i_y in range(0, HEIGHT, TILESIZE):
-    #         pygame.draw.line(self.display, 'white', (0,i_y), (WIDTH, i_y))
-        
+        self.player = Kart('mini_pixel/Cars/Player_blue.png', player_width, player_height, 3, self.camera_x, self.camera_y, direction, vel)
+        self.score = 0
+        self.up_score = False
+       
 
     def run(self):
         while True:
+            # self.camera_rect = pygame.Rect(self.camera_x + self.map[0].width/2, self.camera_y+self.map[0].height/2, self.player.width, self.player.height)
             
-           
-            # self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.scroll[0]) / 30
-            # self.scroll[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.scroll[1]) / 30
-            # render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
 
-            # self.
+
             self.keys = pygame.key.get_pressed()
-
             
             if self.keys[pygame.K_RIGHT] and self.keys[pygame.K_UP]:
                 self.player.direction = 'forward_steer_right'
                 self.camera_x += self.player.vel - 1
                 self.camera_y-= self.player.vel
-                
-
+                self.score += 1
             elif self.keys[pygame.K_LEFT] and self.keys[pygame.K_UP]:
                 self.player.direction = 'forward_steer_left'
                 self.camera_x -= self.player.vel - 1
                 self.camera_y -= self.player.vel
-
+                self.score += 1
             elif self.keys[pygame.K_RIGHT] and self.keys[pygame.K_DOWN]:
                 self.player.direction = 'reverse_steer_right'
                 self.camera_x += self.player.vel - 1
                 self.camera_y += self.player.vel
+                self.score -= 1
             elif self.keys[pygame.K_LEFT] and self.keys[pygame.K_DOWN]:
                 self.player.direction = 'reverse_steer_left'
                 self.camera_x -= self.player.vel - 1
@@ -154,23 +138,61 @@ class Game:
             elif self.keys[pygame.K_UP]:
                 self.camera_y -= self.player.vel
                 self.player.direction = 'forward'
+                self.score += 1
+                self.player.vel += 0.005
+
             elif self.keys[pygame.K_DOWN]:
                 self.camera_y += self.player.vel
                 self.player.direction = 'reverse'
-
+                self.score -= 1
+            if self.camera_x < -74 or self.camera_x > 102:
+                pygame.quit()
+                sys.exit()
+                
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                    pygame.quit()
                    sys.exit()
-
-            # self.player.render(self.display, offset = render_scroll)
-
-
-            self.display.blit(self.map.backhground, (0 - self.camera_x, 0 -self.camera_y))
+            
+            # print(self.camera_rect, self.map[0].rect())
+            
+            self.display.blit(self.map[0].background, ((WIDTH-self.map[0].width)- self.camera_x, (HEIGHT-self.map[0].height) -self.camera_y))
+            self.display.blit(self.map[0].background, ((WIDTH-self.map[1].width)- self.camera_x, (-HEIGHT-self.map[0].height) -self.camera_y-self.player.height))
+            
+            for i in range(1,5):
+                if self.camera_y < (-680-1320*i+ self.player.height):
+                    self.display.blit(self.map[0].background, ((WIDTH-self.map[1].width)- self.camera_x, (-HEIGHT-self.map[0].height*(i+1)) -self.camera_y-self.player.height))
+            for i in range(5,13):
+                if self.camera_y < (-680-1320*i+ self.player.height):
+                    self.display.blit(self.map[1].background, ((WIDTH-self.map[1].width)- self.camera_x, (-HEIGHT-self.map[0].height*(i+1)) -self.camera_y-self.player.height))
+                    # for obs in self.map[1].obs_rect:
+                    #     if self.player.rect().colliderect(obs):
+                    #         pygame.quit()
+                    #         sys.exit()
+            for i in range(13,22):
+                if self.camera_y < (-680-1320*i+ self.player.height):
+                    self.display.blit(self.map[2].background, ((WIDTH-self.map[1].width)- self.camera_x, (-HEIGHT-self.map[0].height*(i+1)) -self.camera_y-self.player.height))
+                    # for obs in self.map[2].obs_rect:
+                    #     if self.player.rect().colliderect(obs):
+                    #         pygame.quit()
+                    #         sys.exit()
+            for i in range(22,35):
+                if self.camera_y < (-680-1320*i+ self.player.height):
+                    self.display.blit(self.map[3].background, ((WIDTH-self.map[1].width)- self.camera_x, (-HEIGHT-self.map[0].height*(i+1)) -self.camera_y-self.player.height))
+                    # for obs in self.map[3].obs_rect:
+                    #     if self.player.rect().colliderect(obs):
+                    #         pygame.quit()
+                    #         sys.exit()
+            for i in range(35,51):
+                if self.camera_y < (-680-1320*i+ self.player.height):
+                    self.display.blit(self.map[4].background, ((WIDTH-self.map[1].width)- self.camera_x, (-HEIGHT-self.map[0].height*(i+1)) -self.camera_y-self.player.height))
+                    # for obs in self.map[4].obs_rect:
+                    #     if self.player.rect().colliderect(obs):
+                    #         pygame.quit()
+                    #         sys.exit()
             self.display.blit(self.player.get_image(), (self.display.get_width()/2, self.display.get_height()-self.player.height*4))
-            # self.camera.update(self.map)
-
+            self.display.blit(self.font.render(f'{self.score}', True, 'white') , (0,0))
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0,0))
             pygame.display.flip()
             
